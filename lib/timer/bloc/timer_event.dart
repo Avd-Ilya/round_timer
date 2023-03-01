@@ -12,8 +12,8 @@ class TimerStarted extends TimerEvent {}
 
 class TimerEnd extends TimerEvent {}
 
-class _TimerTicked extends TimerEvent {
-  const _TimerTicked({required this.duration});
+class TimerTicked extends TimerEvent {
+  const TimerTicked({required this.duration});
   final Duration duration;
 
   @override

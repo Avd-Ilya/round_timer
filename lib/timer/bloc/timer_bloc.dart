@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
@@ -9,7 +8,7 @@ part 'timer_state.dart';
 
 class TimerBloc extends Bloc<TimerEvent, TimerState> {
   StatusTimer statusTimer = StatusTimer.round;
-  final player = AudioPlayer();
+  // final player = AudioPlayer();
   final Ticker _ticker;
   final Duration roundTime;
   final Duration restTime;
@@ -28,7 +27,7 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
       : _ticker = ticker,
         super(const TimerInitial()) {
     on<TimerStarted>(_onStarted);
-    on<_TimerTicked>(_onTicked);
+    on<TimerTicked>(_onTicked);
     on<TimerEnd>((event, emit) {
       emit(const TimerClose());
     });
@@ -41,8 +40,8 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
   }
 
   void _onStarted(TimerStarted event, Emitter<TimerState> emit) {
-    player.play(AssetSource('start.mp3'));
-    emit(TimerRun(roundTime, rounds, currentRound));
+    // player.play(AssetSource('start.mp3'));
+    emit(TimerRun.withSound(roundTime, rounds, currentRound, 'start.mp3'));
     startTimer(roundTime);
   }
 
@@ -50,44 +49,43 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
     _tickerSubscription?.cancel();
     _tickerSubscription = _ticker
         .tick(ticks: time)
-        .listen((duration) => add(_TimerTicked(duration: duration)));
+        .listen((duration) => add(TimerTicked(duration: duration)));
   }
 
-  void _onTicked(_TimerTicked event, Emitter<TimerState> emit) {
-    debugPrint('$statusTimer');
+  void _onTicked(TimerTicked event, Emitter<TimerState> emit) {
     switch (statusTimer) {
       case StatusTimer.round:
         if (event.duration.inSeconds > 0) {
           if (event.duration.inSeconds == warningTime.inSeconds) {
-            player.play(AssetSource('warning.mp3'));
+            // player.play(AssetSource('warning.mp3'));
             statusTimer = StatusTimer.warning;
-            emit(TimerWarning(event.duration, rounds, currentRound));
+            emit(TimerWarning.withSound(event.duration, rounds, currentRound, 'warning.mp3'));
             startTimer(warningTime);
           } else {
             emit(TimerRun(event.duration, rounds, currentRound));
           }
         } else {
           if (currentRound < rounds) {
-            emit(TimerRun(event.duration, rounds, currentRound));
-            player.play(AssetSource('alert.mp3'));
+            emit(TimerRun.withSound(event.duration, rounds, currentRound, 'alert.mp3'));
+            // player.play(AssetSource('alert.mp3'));
             statusTimer = StatusTimer.rest;
             startTimer(restTime + const Duration(seconds: 1));
           } else {
-            player.play(AssetSource('ending.mp3'));
-            emit(const TimerClose());
+            // player.play(AssetSource('ending.mp3'));
+            emit(const TimerClose.withSound('ending.mp3'));
           }
         }
         break;
       case StatusTimer.warning:
         if (event.duration.inSeconds == 0) {
           if (currentRound < rounds) {
-            emit(TimerWarning(event.duration, rounds, currentRound));
-            player.play(AssetSource('alert.mp3'));
+            emit(TimerWarning.withSound(event.duration, rounds, currentRound, 'alert.mp3'));
+            // player.play(AssetSource('alert.mp3'));
             statusTimer = StatusTimer.rest;
             startTimer(restTime + const Duration(seconds: 1));
           } else {
-            player.play(AssetSource('ending.mp3'));
-            emit(const TimerClose());
+            // player.play(AssetSource('ending.mp3'));
+            emit(const TimerClose.withSound('ending.mp3'));
           }
         } else {
           emit(TimerWarning(event.duration, rounds, currentRound));
@@ -95,12 +93,14 @@ class TimerBloc extends Bloc<TimerEvent, TimerState> {
         break;
       case StatusTimer.rest:
         if (event.duration.inSeconds == 0) {
-          player.play(AssetSource('start.mp3'));
+          emit(TimerRest.withSound(event.duration, rounds, currentRound, 'start.mp3'));
+          // player.play(AssetSource('start.mp3'));
           statusTimer = StatusTimer.round;
           currentRound += 1;
           startTimer(roundTime + const Duration(seconds: 1));
+        } else {
+          emit(TimerRest(event.duration, rounds, currentRound));
         }
-        emit(TimerRest(event.duration, rounds, currentRound));
         break;
       default:
     }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -35,6 +36,9 @@ class TimerWidget extends StatelessWidget {
       value: SystemUiOverlayStyle.dark,
       child: BlocBuilder<TimerBloc, TimerState>(
         builder: (context, state) {
+          if (state.sound != null) {
+            AudioPlayer().play(AssetSource(state.sound ?? ''));
+          }
           if (state is TimerInitial) {
             context.read<TimerBloc>().add(TimerStarted());
           }
